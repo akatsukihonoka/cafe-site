@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import "@/agents/register";
 import { getAgent } from "@/core/agent/registry";
 import { inngest } from "@/infra/inngest/client";
 import { createSupabaseRunStore } from "@/infra/supabase/runStore";
@@ -23,31 +24,34 @@ export async function POST(req: Request) {
   }
   const { runId, projectId, history, message } = parsed.data;
 
-  // まずエージェントの有無を確認する(I/Oを伴わない)。
-  // Phase6で実装されるまでは、Supabase接続を試みる前にここで501を返す。
-  let interviewer;
+  let result: InterviewerOutput;
   try {
-    interviewer = getAgent("interviewer");
-  } catch {
+    const interviewer = getAgent("interviewer");
+    result = (await interviewer({
+      history: [...history, { role: "user", content: message }],
+    })) as InterviewerOutput;
+  } catch (error) {
     return NextResponse.json<ChatApiResponse>(
-      { status: "error", message: "Interviewerはまだ実装されていません(Phase6で実装予定)。" },
-      { status: 501 }
+      { status: "error", message: `Interviewerの呼び出しに失敗しました: ${(error as Error).message}` },
+      { status: 502 }
     );
   }
 
-  const runStore = createSupabaseRunStore();
-  await runStore.ensureRun(runId, projectId);
-
-  const result = (await interviewer({
-    history: [...history, { role: "user", content: message }],
-  })) as InterviewerOutput;
-
-  if (result.status === "complete") {
-    await runStore.updateRunStatus(runId, "planning");
-    await inngest.send({
-      name: SITE_GENERATE_REQUESTED,
-      data: { runId, projectId, requirement: result.requirement },
-    });
+  // Supabase/Inngestへの永続化はベストエフォート。
+  // 認証(Supabase Auth)がまだ無いため、projects行が存在せずFK制約で失敗し得る(Phase5の既知の制約)。
+  // 失敗してもチャット自体の応答は返す。
+  try {
+    const runStore = createSupabaseRunStore();
+    await runStore.ensureRun(runId, projectId);
+    if (result.status === "complete") {
+      await runStore.updateRunStatus(runId, "planning");
+      await inngest.send({
+        name: SITE_GENERATE_REQUESTED,
+        data: { runId, projectId, requirement: result.requirement },
+      });
+    }
+  } catch (error) {
+    console.error("Failed to persist run state or trigger workflow:", error);
   }
 
   return NextResponse.json<ChatApiResponse>({ status: result.status, message: result.message });

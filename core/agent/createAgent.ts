@@ -1,4 +1,5 @@
 import type { LLMProvider } from "../llm/provider.port";
+import { getLLMProvider } from "../llm/providers";
 import type { AgentDefinition, AgentRunner } from "../types/agent";
 
 /**
@@ -26,4 +27,18 @@ export function createAgent<TIn, TOut>(
 
     return definition.outputSchema.parse(output);
   };
+}
+
+/**
+ * createAgentのProvider解決を遅延させたバージョン。
+ * getLLMProvider()(= OPENAI_MODEL等の環境変数を読む)はモジュール読み込み時ではなく、
+ * 実際にエージェントが呼ばれた瞬間に実行される。
+ * これによりagents/配下のindex.tsをimportしただけでは環境変数の有無を問わず失敗しない
+ * (next buildやルートのモジュール解決時に環境変数が未設定でも壊れない)。
+ */
+export function createLazyAgent<TIn, TOut>(
+  definition: AgentDefinition<TIn, TOut>,
+  resolveProvider: () => LLMProvider = getLLMProvider
+): AgentRunner<TIn, TOut> {
+  return (rawInput: TIn) => createAgent(definition, resolveProvider())(rawInput);
 }

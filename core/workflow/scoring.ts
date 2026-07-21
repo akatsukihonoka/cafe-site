@@ -1,4 +1,5 @@
-import { type PipelineStage, isEarlierStage } from "./stages";
+import { z } from "zod";
+import { PIPELINE_STAGES, type PipelineStage, isEarlierStage } from "./stages";
 
 /**
  * MVPの合格ライン。Phase1合意: 95点は将来目標として残しつつ、
@@ -9,15 +10,22 @@ export const PASS_THRESHOLD = 82;
 /** 1ステージあたりの改善リトライ上限。無限ループ・コスト青天井を防ぐ。 */
 export const MAX_RETRIES_PER_STAGE = 2;
 
-export interface ReviewFinding {
-  stage: PipelineStage;
-  issue: string;
-}
+/**
+ * Reviewer/QAエージェントの出力契約。ここで定義し、agents/reviewer, agents/qaの
+ * outputSchemaとして再利用することで、Workflow Engineとエージェントの間で型がずれない。
+ */
+export const reviewFindingSchema = z.object({
+  stage: z.enum(PIPELINE_STAGES),
+  issue: z.string().min(1),
+});
 
-export interface ReviewResult {
-  score: number;
-  findings: ReviewFinding[];
-}
+export const reviewResultSchema = z.object({
+  score: z.number().min(0).max(100),
+  findings: z.array(reviewFindingSchema),
+});
+
+export type ReviewFinding = z.infer<typeof reviewFindingSchema>;
+export type ReviewResult = z.infer<typeof reviewResultSchema>;
 
 export type NextAction =
   | { type: "pass" }

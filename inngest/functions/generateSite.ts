@@ -1,4 +1,5 @@
 import { z } from "zod";
+import "@/agents/register";
 import { inngest } from "@/infra/inngest/client";
 import { createSupabaseRunStore } from "@/infra/supabase/runStore";
 import { deploySite } from "@/infra/deploy/vercel";
@@ -82,8 +83,9 @@ export const generateSite = inngest.createFunction(
       });
 
       const review = await step.run(`review-loop-${loop}`, async () => {
-        const reviewerOutput = (await getAgent("reviewer")({ outputs })) as ReviewResult;
-        const qaOutput = (await getAgent("qa")({ outputs })) as ReviewResult;
+        const reviewInput = { requirement, outputs };
+        const reviewerOutput = (await getAgent("reviewer")(reviewInput)) as ReviewResult;
+        const qaOutput = (await getAgent("qa")(reviewInput)) as ReviewResult;
         return mergeReviewResults(reviewerOutput, qaOutput);
       });
 

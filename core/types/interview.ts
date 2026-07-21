@@ -1,17 +1,18 @@
+import type { Requirement } from "./requirement";
+
 export interface InterviewMessage {
   role: "user" | "interviewer";
   content: string;
 }
 
 /**
- * Interviewer Agent(Phase6)が返すことを期待する出力の形。
- * status="question"ならmessageを追加質問として表示し、
- * status="complete"ならrequirementが確定した要件JSONとしてWorkflow Engineに渡される。
+ * Interviewer Agent(Phase6)が返す出力の形。実体は agents/interviewer/contract.ts の
+ * interviewerOutputSchema (zod)。ここではAPIルート等が使う軽量なTS型として再掲する。
  */
 export interface InterviewerOutput {
   status: "question" | "complete";
   message: string;
-  requirement?: unknown;
+  requirement?: Requirement;
 }
 
 export type ChatApiResponse =
