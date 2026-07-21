@@ -24,6 +24,7 @@ export interface RunState {
   runId: string;
   projectId: string;
   status: RunStatus;
+  currentStage: RunStageName | null;
   finalScore?: number;
   deployUrl?: string;
 }

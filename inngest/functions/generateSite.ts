@@ -33,6 +33,7 @@ async function runStage(
   runId: string,
   runStore: RunStore
 ) {
+  await runStore.setCurrentStage(runId, stage);
   const agent = getAgent(stage);
   const input = buildAgentInput(requirement, outputs);
   const output = await agent(input);
@@ -75,7 +76,10 @@ export const generateSite = inngest.createFunction(
         outputs[stage] = output;
       }
 
-      await step.run("mark-run-reviewing", () => runStore.updateRunStatus(runId, "reviewing"));
+      await step.run("mark-run-reviewing", async () => {
+        await runStore.updateRunStatus(runId, "reviewing");
+        await runStore.setCurrentStage(runId, "review_qa");
+      });
 
       const review = await step.run(`review-loop-${loop}`, async () => {
         const reviewerOutput = (await getAgent("reviewer")({ outputs })) as ReviewResult;
@@ -86,7 +90,10 @@ export const generateSite = inngest.createFunction(
       const decision = decideNextAction(review, retryCountByStage);
 
       if (decision.type === "pass") {
-        await step.run("mark-run-deploying", () => runStore.updateRunStatus(runId, "deploying"));
+        await step.run("mark-run-deploying", async () => {
+          await runStore.updateRunStatus(runId, "deploying");
+          await runStore.setCurrentStage(runId, "deploy");
+        });
         const deployResult = await step.run("deploy", () =>
           deploySite({ projectId, siteOutputs: outputs })
         );

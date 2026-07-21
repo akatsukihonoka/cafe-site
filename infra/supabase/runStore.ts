@@ -3,13 +3,14 @@ import { getSupabaseServiceClient } from "./client";
 
 export function createSupabaseRunStore(): RunStore {
   return {
-    async createRun(runId, projectId) {
+    async ensureRun(runId, projectId) {
       const supabase = getSupabaseServiceClient();
-      const { error } = await supabase
-        .from("runs")
-        .insert({ id: runId, project_id: projectId, status: "interviewing" });
+      const { error } = await supabase.from("runs").upsert(
+        { id: runId, project_id: projectId, status: "interviewing", current_stage: "interview" },
+        { onConflict: "id", ignoreDuplicates: true }
+      );
       if (error) throw error;
-      return { runId, projectId, status: "interviewing" };
+      return { runId, projectId, status: "interviewing", currentStage: "interview" };
     },
 
     async updateRunStatus(runId, status) {
@@ -17,6 +18,15 @@ export function createSupabaseRunStore(): RunStore {
       const { error } = await supabase
         .from("runs")
         .update({ status, updated_at: new Date().toISOString() })
+        .eq("id", runId);
+      if (error) throw error;
+    },
+
+    async setCurrentStage(runId, stage) {
+      const supabase = getSupabaseServiceClient();
+      const { error } = await supabase
+        .from("runs")
+        .update({ current_stage: stage, updated_at: new Date().toISOString() })
         .eq("id", runId);
       if (error) throw error;
     },

@@ -1,7 +1,7 @@
 import type { PipelineStage } from "../workflow/stages";
 import type { AgentRunner } from "../types/agent";
 
-export type RegisteredAgentName = PipelineStage | "reviewer" | "qa";
+export type RegisteredAgentName = "interviewer" | PipelineStage | "reviewer" | "qa";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyAgentRunner = AgentRunner<any, any>;
