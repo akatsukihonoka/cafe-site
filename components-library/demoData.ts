@@ -9,7 +9,7 @@ export const DEMO_DESIGNER_OUTPUT: DesignerOutput = {
   colorPalette: {
     primary: "#3B2314",
     secondary: "#E9D8BE",
-    accent: "#C9622A",
+    accent: "#9A3412",
     background: "#FFFBF5",
     text: "#2B2118",
   },
