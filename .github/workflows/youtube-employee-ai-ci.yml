@@ -1,0 +1,40 @@
+name: youtube-employee-ai CI
+
+on:
+  pull_request:
+    paths:
+      - "youtube-employee-ai/**"
+      - ".github/workflows/youtube-employee-ai-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "youtube-employee-ai/**"
+      - ".github/workflows/youtube-employee-ai-ci.yml"
+
+defaults:
+  run:
+    working-directory: youtube-employee-ai
+
+jobs:
+  lint-typecheck-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: youtube-employee-ai/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run format:check
+
+      - run: npm run lint
+
+      - run: npm run typecheck
+
+      - run: npm test
+
+      - run: npm run build
