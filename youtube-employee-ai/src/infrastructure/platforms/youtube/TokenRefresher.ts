@@ -1,11 +1,12 @@
 import type { Channel } from '@/domain/entities/Channel';
+import type { AccessTokenProvider } from '@/domain/ports/AccessTokenProvider';
 import type { ChannelRepository } from '@/domain/ports/ChannelRepository';
 import { decryptToken, encryptToken } from '@/lib/crypto';
 import { refreshAccessToken, type GoogleOAuthConfig } from './googleOAuthClient';
 
 const EXPIRY_BUFFER_MS = 60_000;
 
-export class TokenRefresher {
+export class TokenRefresher implements AccessTokenProvider {
   constructor(
     private readonly channelRepository: ChannelRepository,
     private readonly oauthConfig: Pick<GoogleOAuthConfig, 'clientId' | 'clientSecret'>,

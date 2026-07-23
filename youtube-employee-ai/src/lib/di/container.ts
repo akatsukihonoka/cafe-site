@@ -7,7 +7,12 @@ import { ConnectChannelUsecase } from '@/domain/usecases/ConnectChannel';
 import { DisconnectChannelUsecase } from '@/domain/usecases/DisconnectChannel';
 import { YouTubeDataProvider } from '@/infrastructure/platforms/youtube/YouTubeDataProvider';
 import { TokenRefresher } from '@/infrastructure/platforms/youtube/TokenRefresher';
+import { createOpenAIAnalyzer } from '@/infrastructure/ai/OpenAIAnalyzer';
+import { FetchChannelMetricsUsecase } from '@/domain/usecases/FetchChannelMetrics';
+import { GenerateDailyBriefingUsecase } from '@/domain/usecases/GenerateDailyBriefing';
 import { getServerEnv } from '@/lib/env';
+
+const AI_MODEL = 'gpt-4o-mini';
 
 // 実DB接続(Prisma)や外部APIクライアントが初めて必要になるのはこれらのfactoryが呼ばれた時点。
 // import自体ではDATABASE_URL等の検証は走らない。
@@ -54,5 +59,22 @@ export function getTokenRefresher() {
     getChannelRepository(),
     { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET },
     env.TOKEN_ENCRYPTION_KEY,
+  );
+}
+
+export function getAIAnalyzer() {
+  return createOpenAIAnalyzer(getServerEnv().OPENAI_API_KEY, AI_MODEL);
+}
+
+export function getFetchChannelMetricsUsecase() {
+  return new FetchChannelMetricsUsecase(getYouTubeDataProvider(), getTokenRefresher());
+}
+
+export function getGenerateDailyBriefingUsecase() {
+  return new GenerateDailyBriefingUsecase(
+    getFetchChannelMetricsUsecase(),
+    getAIAnalyzer(),
+    getBriefingRepository(),
+    AI_MODEL,
   );
 }
