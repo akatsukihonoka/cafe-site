@@ -2,6 +2,7 @@ import { prisma } from '@/infrastructure/db/prismaClient';
 import { PrismaUserRepository } from '@/infrastructure/db/PrismaUserRepository';
 import { PrismaChannelRepository } from '@/infrastructure/db/PrismaChannelRepository';
 import { PrismaBriefingRepository } from '@/infrastructure/db/PrismaBriefingRepository';
+import { PrismaJobRunRepository } from '@/infrastructure/db/PrismaJobRunRepository';
 import { SyncUserFromAuthUsecase } from '@/domain/usecases/SyncUserFromAuth';
 import { ConnectChannelUsecase } from '@/domain/usecases/ConnectChannel';
 import { DisconnectChannelUsecase } from '@/domain/usecases/DisconnectChannel';
@@ -26,6 +27,10 @@ export function getChannelRepository() {
 
 export function getBriefingRepository() {
   return new PrismaBriefingRepository(prisma);
+}
+
+export function getJobRunRepository() {
+  return new PrismaJobRunRepository(prisma);
 }
 
 export function getSyncUserFromAuthUsecase() {

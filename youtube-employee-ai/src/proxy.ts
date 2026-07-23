@@ -2,18 +2,25 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createSupabaseProxyClient } from '@/infrastructure/auth/supabaseProxyClient';
 
 const PUBLIC_PATHS = ['/login', '/callback'];
+// CRON_SECRET等、ユーザーセッション以外の方法で認可するルート。ここではセッションチェックを行わない。
+const AUTH_BYPASS_PATHS = ['/api/cron'];
 
-function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+function matchesPrefix(pathname: string, prefixes: string[]): boolean {
+  return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
 export async function proxy(request: NextRequest) {
-  const { supabase, getResponse } = createSupabaseProxyClient(request);
+  const { pathname } = request.nextUrl;
 
+  if (matchesPrefix(pathname, AUTH_BYPASS_PATHS)) {
+    return NextResponse.next();
+  }
+
+  const { supabase, getResponse } = createSupabaseProxyClient(request);
   const { data } = await supabase.auth.getClaims();
   const isAuthenticated = data?.claims != null;
 
-  if (!isAuthenticated && !isPublicPath(request.nextUrl.pathname)) {
+  if (!isAuthenticated && !matchesPrefix(pathname, PUBLIC_PATHS)) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 

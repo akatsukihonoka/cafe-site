@@ -12,11 +12,20 @@ export class GenerateDailyBriefingUsecase {
     private readonly aiModel: string,
   ) {}
 
-  /** (channelId, targetDate)で冪等。既にCOMPLETEDなブリーフィングがあれば再生成しない。 */
-  async execute(channel: Channel, targetDate: Date): Promise<Briefing> {
-    const existing = await this.briefingRepository.findByChannelAndDate(channel.id, targetDate);
-    if (existing?.status === 'COMPLETED') {
-      return existing;
+  /**
+   * (channelId, targetDate)で冪等。既にCOMPLETEDなブリーフィングがあれば再生成しない。
+   * options.force=trueの場合は既存の状態を無視して強制的に再生成する(手動再生成用)。
+   */
+  async execute(
+    channel: Channel,
+    targetDate: Date,
+    options?: { force?: boolean },
+  ): Promise<Briefing> {
+    if (!options?.force) {
+      const existing = await this.briefingRepository.findByChannelAndDate(channel.id, targetDate);
+      if (existing?.status === 'COMPLETED') {
+        return existing;
+      }
     }
 
     try {
