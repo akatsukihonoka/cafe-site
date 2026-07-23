@@ -1,4 +1,5 @@
 import { yesterdayInJST } from '@/lib/dates';
+import { logger } from '@/lib/logger';
 import {
   getChannelRepository,
   getGenerateDailyBriefingUsecase,
@@ -27,6 +28,8 @@ export async function runDailyAnalysisForAllChannels(): Promise<DailyAnalysisSum
   const targetDate = yesterdayInJST();
   const summary: DailyAnalysisSummary = { succeeded: 0, failed: 0, errors: [] };
 
+  logger.info('daily-analysis batch started', { jobType: JOB_TYPE, channelCount: channels.length });
+
   for (const channel of channels) {
     const jobRun = await jobRunRepository.start({ jobType: JOB_TYPE, channelId: channel.id });
 
@@ -41,6 +44,7 @@ export async function runDailyAnalysisForAllChannels(): Promise<DailyAnalysisSum
         summary.failed += 1;
         summary.errors.push({ channelId: channel.id, message });
         await jobRunRepository.finish(jobRun.id, { status: 'FAILED', errorMessage: message });
+        logger.warn('daily-analysis briefing failed', { channelId: channel.id, message });
       }
     } catch (error) {
       // GenerateDailyBriefingUsecase自体はFAILEDを返す設計だが、Repository層など
@@ -49,8 +53,15 @@ export async function runDailyAnalysisForAllChannels(): Promise<DailyAnalysisSum
       summary.failed += 1;
       summary.errors.push({ channelId: channel.id, message });
       await jobRunRepository.finish(jobRun.id, { status: 'FAILED', errorMessage: message });
+      logger.error('daily-analysis unexpected error', { channelId: channel.id, message });
     }
   }
+
+  logger.info('daily-analysis batch finished', {
+    jobType: JOB_TYPE,
+    succeeded: summary.succeeded,
+    failed: summary.failed,
+  });
 
   return summary;
 }

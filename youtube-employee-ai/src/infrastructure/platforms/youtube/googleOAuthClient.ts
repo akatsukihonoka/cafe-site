@@ -1,3 +1,5 @@
+import { ValidationError, toExternalApiError } from '@/lib/errors';
+
 const GOOGLE_OAUTH_AUTHORIZE_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
@@ -52,9 +54,7 @@ export async function exchangeCodeForTokens(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Google OAuth token exchange failed: ${response.status} ${await response.text()}`,
-    );
+    throw await toExternalApiError(response, 'Google OAuth token exchange failed');
   }
 
   const data = (await response.json()) as {
@@ -64,7 +64,7 @@ export async function exchangeCodeForTokens(
   };
 
   if (!data.refresh_token) {
-    throw new Error(
+    throw new ValidationError(
       'Google OAuth response did not include a refresh_token. Check access_type=offline and prompt=consent.',
     );
   }
@@ -97,9 +97,7 @@ export async function refreshAccessToken(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Google OAuth token refresh failed: ${response.status} ${await response.text()}`,
-    );
+    throw await toExternalApiError(response, 'Google OAuth token refresh failed');
   }
 
   const data = (await response.json()) as { access_token: string; expires_in: number };

@@ -1,6 +1,12 @@
 import OpenAI from 'openai';
 import type { AIAnalysisContext, AIAnalyzer } from '@/domain/ports/AIAnalyzer';
 import type { BriefingContent } from '@/domain/entities/Briefing';
+import {
+  AuthExpiredError,
+  ExternalApiError,
+  QuotaExceededError,
+  ValidationError,
+} from '@/lib/errors';
 import { SYSTEM_PROMPT, buildUserPrompt } from './promptTemplate';
 import { briefingContentSchema } from './briefingContentSchema';
 
@@ -11,6 +17,24 @@ const RETRY_NOTE =
   '\n\n前回の出力はスキーマに一致しませんでした。yesterdaySummary/todos/suggestionsの形式を守り、JSON以外の文章を含めないでください。';
 
 type ChatCompletionsClient = Pick<OpenAI, 'chat'>;
+
+function toAnalyzerError(error: unknown, attempts: number): Error {
+  const prefix = `AI response invalid after ${attempts} attempt(s)`;
+
+  if (error instanceof OpenAI.APIError) {
+    const message = `${prefix}: ${error.message}`;
+    if (error.status === 401) {
+      return new AuthExpiredError(message, error.status, { cause: error });
+    }
+    if (error.status === 429) {
+      return new QuotaExceededError(message, error.status, { cause: error });
+    }
+    return new ExternalApiError(message, error.status, { cause: error });
+  }
+
+  const message = `${prefix}: ${error instanceof Error ? error.message : String(error)}`;
+  return new ValidationError(message, { cause: error instanceof Error ? error : undefined });
+}
 
 export class OpenAIAnalyzer implements AIAnalyzer {
   constructor(
@@ -47,9 +71,7 @@ export class OpenAIAnalyzer implements AIAnalyzer {
       }
     }
 
-    throw new Error(
-      `AI response validation failed after ${MAX_ATTEMPTS} attempts: ${String(lastError)}`,
-    );
+    throw toAnalyzerError(lastError, MAX_ATTEMPTS);
   }
 }
 

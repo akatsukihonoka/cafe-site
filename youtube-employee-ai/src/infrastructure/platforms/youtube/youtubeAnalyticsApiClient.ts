@@ -1,3 +1,5 @@
+import { toExternalApiError } from '@/lib/errors';
+
 const YOUTUBE_ANALYTICS_API_BASE = 'https://youtubeanalytics.googleapis.com/v2';
 
 const METRICS = [
@@ -42,7 +44,7 @@ export async function fetchChannelDailyReport(
   });
 
   if (!response.ok) {
-    throw new Error(`YouTube Analytics API error: ${response.status} ${await response.text()}`);
+    throw await toExternalApiError(response, 'YouTube Analytics API error');
   }
 
   return response.json() as Promise<YouTubeAnalyticsReportResponse>;

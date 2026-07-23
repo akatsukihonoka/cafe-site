@@ -1,3 +1,5 @@
+import { toExternalApiError } from '@/lib/errors';
+
 const YOUTUBE_DATA_API_BASE = 'https://www.googleapis.com/youtube/v3';
 
 export interface YouTubeChannelListResponse {
@@ -18,7 +20,7 @@ export async function fetchMyChannel(accessToken: string): Promise<YouTubeChanne
   });
 
   if (!response.ok) {
-    throw new Error(`YouTube Data API error: ${response.status} ${await response.text()}`);
+    throw await toExternalApiError(response, 'YouTube Data API error');
   }
 
   return response.json() as Promise<YouTubeChannelListResponse>;
