@@ -12,8 +12,18 @@ function createPrismaClient(): PrismaClient {
 }
 
 // Next.js dev serverのホットリロードで接続が増殖しないよう、globalThisにキャッシュする。
-export const prisma: PrismaClient = globalThis.prismaGlobal ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.prismaGlobal = prisma;
+function getPrismaClient(): PrismaClient {
+  if (!globalThis.prismaGlobal) {
+    globalThis.prismaGlobal = createPrismaClient();
+  }
+  return globalThis.prismaGlobal;
 }
+
+// 実際にクエリを発行するまで(=最初のプロパティアクセスまで)接続・env検証を遅延させる。
+// こうしないと、Next.jsのビルド時ページデータ収集がこのモジュールをimportしただけで
+// getServerEnv()が実行され、ビルドが失敗する。
+export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getPrismaClient() as object, prop, receiver);
+  },
+});
