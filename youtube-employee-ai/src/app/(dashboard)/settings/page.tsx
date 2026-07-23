@@ -42,7 +42,18 @@ export default async function SettingsPage({
                   {STATUS_LABEL[channel.status]}
                 </p>
               </div>
-              <DisconnectChannelButton channelId={channel.id} />
+              <div className="flex items-center gap-3">
+                {channel.status === 'REAUTH_REQUIRED' && (
+                  // eslint-disable-next-line @next/next/no-html-link-for-pages
+                  <a
+                    href="/api/channels/connect"
+                    className="text-sm font-medium text-neutral-900 underline dark:text-neutral-100"
+                  >
+                    再連携する
+                  </a>
+                )}
+                <DisconnectChannelButton channelId={channel.id} />
+              </div>
             </li>
           ))}
         </ul>

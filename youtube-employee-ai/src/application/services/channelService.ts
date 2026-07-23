@@ -21,6 +21,12 @@ export async function listMyChannels(): Promise<Channel[]> {
   return getChannelRepository().findByUserId(user.id);
 }
 
+/** MVPでは複数チャンネル切替UIを持たないため、連携済みの先頭チャンネルを「主チャンネル」として扱う。 */
+export async function getMyPrimaryChannel(): Promise<Channel | null> {
+  const channels = await listMyChannels();
+  return channels.find((channel) => channel.status === 'CONNECTED') ?? channels[0] ?? null;
+}
+
 export async function disconnectMyChannel(channelId: string): Promise<void> {
   const user = await getCurrentUser();
   if (!user) {

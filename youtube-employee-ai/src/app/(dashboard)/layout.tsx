@@ -9,6 +9,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <span className="font-semibold">YouTube社員AI</span>
         <nav className="flex items-center gap-4">
           <Link
+            href="/"
+            className="text-sm text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+          >
+            今日
+          </Link>
+          <Link
+            href="/history"
+            className="text-sm text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+          >
+            履歴
+          </Link>
+          <Link
             href="/settings"
             className="text-sm text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
           >
