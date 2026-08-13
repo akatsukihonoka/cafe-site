@@ -34,4 +34,28 @@ describe("renderStaticSiteHtml", () => {
   it("Tailwindクラスに依存しない(styleのみで表現されている)", () => {
     expect(html).not.toMatch(/class="/);
   });
+
+  it("analyticsを渡さない場合は計測タグを含まない", () => {
+    expect(html).not.toContain("/api/analytics/track");
+  });
+
+  it("analyticsを渡すと計測タグ(pageview送信・CTAクリック計測)を埋め込む", () => {
+    const withAnalytics = renderStaticSiteHtml(DEMO_FRONTEND_OUTPUT, DEMO_DESIGNER_OUTPUT, {
+      projectId: "proj-123",
+      studioOrigin: "https://studio.example.com",
+    });
+
+    expect(withAnalytics).toContain("https://studio.example.com/api/analytics/track");
+    expect(withAnalytics).toContain("proj-123");
+    expect(withAnalytics).toContain('send("pageview")');
+    expect(withAnalytics).toContain("data-cta=\"true\"");
+  });
+
+  it("projectIdに</script>相当の文字列が含まれてもスクリプトタグを閉じない", () => {
+    const withAnalytics = renderStaticSiteHtml(DEMO_FRONTEND_OUTPUT, DEMO_DESIGNER_OUTPUT, {
+      projectId: "</script><script>alert(1)</script>",
+      studioOrigin: "https://studio.example.com",
+    });
+    expect(withAnalytics).not.toContain("</script><script>alert(1)</script>");
+  });
 });

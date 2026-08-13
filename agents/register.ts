@@ -9,6 +9,7 @@ import { runFrontend } from "./frontend";
 import { runReviewer } from "./reviewer";
 import { runQa } from "./qa";
 import { runEditor } from "./editor";
+import { runAnalyticsAdvisor } from "./analyticsAdvisor";
 
 /**
  * このモジュールをimportする(副作用のみが目的)と、全エージェントが
@@ -26,3 +27,4 @@ registerAgent("frontend", runFrontend);
 registerAgent("reviewer", runReviewer);
 registerAgent("qa", runQa);
 registerAgent("editor", runEditor);
+registerAgent("analyticsAdvisor", runAnalyticsAdvisor);

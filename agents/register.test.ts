@@ -13,6 +13,7 @@ const ALL_AGENTS: RegisteredAgentName[] = [
   "reviewer",
   "qa",
   "editor",
+  "analyticsAdvisor",
 ];
 
 describe("agents/register", () => {

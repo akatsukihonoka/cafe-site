@@ -20,9 +20,14 @@ export default function ProjectPage() {
       <Card>
         <CardHeader className="flex-row items-center justify-between">
           <CardTitle>AI Web Studio</CardTitle>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/projects/${projectId}/preview?demo=1`}>プレビューを見る</Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/projects/${projectId}/preview?demo=1`}>プレビューを見る</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/projects/${projectId}/analytics`}>アクセス分析</Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <StageProgress status={realtime.status} currentStage={realtime.currentStage} />

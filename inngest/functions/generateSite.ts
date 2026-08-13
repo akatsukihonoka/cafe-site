@@ -59,6 +59,17 @@ export const generateSite = inngest.createFunction(
     const { runId, projectId, requirement } = eventDataSchema.parse(event.data);
     const runStore = createSupabaseRunStore();
 
+    // requirementはこの時点までSupabaseに永続化されていない(イベントデータにのみ存在)ため、
+    // Analytics Advisor等、後からrequirementを参照したい機能のために記録しておく。
+    await step.run("record-requirement", () =>
+      runStore.upsertStageRecord(runId, {
+        stage: "interview",
+        status: "succeeded",
+        attempt: 1,
+        output: requirement,
+      })
+    );
+
     await step.run("mark-run-planning", () => runStore.updateRunStatus(runId, "planning"));
 
     const outputs: Partial<Record<PipelineStage, unknown>> = {};

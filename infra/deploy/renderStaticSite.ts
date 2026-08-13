@@ -50,7 +50,7 @@ function renderSection(section: FrontendSection, designer: DesignerOutput): stri
     .join(";");
 
   const ctaHtml = section.cta
-    ? `<span style="display:inline-block;margin-top:1.5rem;border-radius:9999px;padding:0.5rem 1.5rem;background:${designer.colorPalette.primary};color:#ffffff;">${escapeHtml(section.cta)}</span>`
+    ? `<span data-cta="true" data-section-kind="${section.kind}" style="display:inline-block;margin-top:1.5rem;border-radius:9999px;padding:0.5rem 1.5rem;background:${designer.colorPalette.primary};color:#ffffff;cursor:pointer;">${escapeHtml(section.cta)}</span>`
     : "";
 
   return [
@@ -64,12 +64,43 @@ function renderSection(section: FrontendSection, designer: DesignerOutput): stri
   ].join("");
 }
 
+export interface AnalyticsEmbedOptions {
+  projectId: string;
+  /** 計測イベントの送信先(このAI Web Studioアプリ自身のオリジン)。 */
+  studioOrigin: string;
+}
+
+function safeJsonForScript(value: unknown): string {
+  // </script>によるHTML崩れ・スクリプトインジェクションを避けるため、"<"をエスケープする。
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
+/**
+ * pageview(初回描画時)とCTAクリック([data-cta]要素)を、
+ * このアプリの/api/analytics/trackへ送るだけの最小限の計測タグ。
+ * 個人を特定する情報(cookie/IP等)は一切扱わない。
+ */
+function renderAnalyticsScript({ projectId, studioOrigin }: AnalyticsEmbedOptions): string {
+  const config = safeJsonForScript({
+    endpoint: `${studioOrigin}/api/analytics/track`,
+    projectId,
+  });
+
+  return `<script>(function(){var CONFIG=${config};function send(type,sectionKind){var payload=JSON.stringify({projectId:CONFIG.projectId,type:type,sectionKind:sectionKind});try{if(navigator.sendBeacon){navigator.sendBeacon(CONFIG.endpoint,new Blob([payload],{type:"application/json"}));return;}}catch(e){}fetch(CONFIG.endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:payload,keepalive:true}).catch(function(){});}send("pageview");document.querySelectorAll("[data-cta]").forEach(function(el){el.addEventListener("click",function(){send("cta_click",el.getAttribute("data-section-kind")||undefined);});});})();</script>`;
+}
+
 /**
  * FrontendOutput/DesignerOutputから、依存ライブラリ無しで開ける
  * 単一の静的HTML文書を生成する。Vercelデプロイ用の成果物として使う。
+ * analyticsを渡すと、pageview/CTAクリックを計測する小さなタグを埋め込む。
  */
-export function renderStaticSiteHtml(frontend: FrontendOutput, designer: DesignerOutput): string {
+export function renderStaticSiteHtml(
+  frontend: FrontendOutput,
+  designer: DesignerOutput,
+  analytics?: AnalyticsEmbedOptions
+): string {
   const sectionsHtml = frontend.sections.map((s) => renderSection(s, designer)).join("");
+  const analyticsScript = analytics ? renderAnalyticsScript(analytics) : "";
 
   return [
     "<!doctype html>",
@@ -82,6 +113,7 @@ export function renderStaticSiteHtml(frontend: FrontendOutput, designer: Designe
     `<body style="margin:0;background:${designer.colorPalette.background};color:${designer.colorPalette.text};">`,
     `<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">${escapeHtml(frontend.pageTitle)}</h1>`,
     sectionsHtml,
+    analyticsScript,
     "</body>",
     "</html>",
   ].join("");

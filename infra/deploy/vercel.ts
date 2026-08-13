@@ -38,7 +38,13 @@ export const deploySite: DeploySite = async ({
 
   const frontend = frontendOutputSchema.parse(siteOutputs.frontend);
   const designer = designerOutputSchema.parse(siteOutputs.designer);
-  const html = renderStaticSiteHtml(frontend, designer);
+
+  const studioOrigin = process.env.NEXT_PUBLIC_APP_URL;
+  const html = renderStaticSiteHtml(
+    frontend,
+    designer,
+    studioOrigin ? { projectId, studioOrigin } : undefined
+  );
 
   const name = projectNameFor(projectId);
   const endpoint = new URL(`${VERCEL_API_BASE}/v13/deployments`);
