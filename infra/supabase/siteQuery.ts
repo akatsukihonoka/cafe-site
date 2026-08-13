@@ -3,6 +3,7 @@ import { frontendOutputSchema, type FrontendOutput } from "@/agents/frontend/con
 import { designerOutputSchema, type DesignerOutput } from "@/agents/designer/contract";
 
 export interface GeneratedSite {
+  runId: string;
   frontend: FrontendOutput;
   designer: DesignerOutput;
 }
@@ -50,5 +51,5 @@ export async function getLatestGeneratedSite(projectId: string): Promise<Generat
 
   if (!frontend || !designer) return null;
 
-  return { frontend, designer };
+  return { runId: run.id, frontend, designer };
 }

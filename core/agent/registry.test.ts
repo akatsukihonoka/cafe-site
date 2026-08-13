@@ -6,8 +6,8 @@ describe("agent registry", () => {
     clearAgentRegistry();
   });
 
-  it("未登録のエージェントを取得しようとするとPhase6実装待ちであることを伝えるエラーを投げる", () => {
-    expect(() => getAgent("director")).toThrow(/Phase6/);
+  it("未登録のエージェントを取得しようとすると未実装であることを伝えるエラーを投げる", () => {
+    expect(() => getAgent("director")).toThrow(/not registered/);
   });
 
   it("登録したエージェントを取得できる", async () => {

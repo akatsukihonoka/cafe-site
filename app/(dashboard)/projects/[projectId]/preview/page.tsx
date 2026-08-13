@@ -1,6 +1,7 @@
 import { SitePage } from "@/components-library/SitePage";
 import { DEMO_FRONTEND_OUTPUT, DEMO_DESIGNER_OUTPUT } from "@/components-library/demoData";
 import { getLatestGeneratedSite } from "@/infra/supabase/siteQuery";
+import { EditPanel } from "@/components/chat/EditPanel";
 
 interface PreviewPageProps {
   params: Promise<{ projectId: string }>;
@@ -21,7 +22,12 @@ export default async function PreviewPage({ params, searchParams }: PreviewPageP
       console.error("Failed to load generated site:", error);
     }
     if (generated) {
-      return <SitePage frontend={generated.frontend} designer={generated.designer} />;
+      return (
+        <div>
+          <SitePage frontend={generated.frontend} designer={generated.designer} />
+          <EditPanel projectId={projectId} disabled={false} />
+        </div>
+      );
     }
   }
 
@@ -31,6 +37,11 @@ export default async function PreviewPage({ params, searchParams }: PreviewPageP
         デモデータを表示しています(このプロジェクトの生成結果はまだありません)
       </div>
       <SitePage frontend={DEMO_FRONTEND_OUTPUT} designer={DEMO_DESIGNER_OUTPUT} />
+      <EditPanel
+        projectId={projectId}
+        disabled
+        disabledReason="デモ表示中は修正できません。実際にサイトを生成してからお試しください。"
+      />
     </div>
   );
 }

@@ -8,11 +8,13 @@ import { runCopywriter } from "./copywriter";
 import { runFrontend } from "./frontend";
 import { runReviewer } from "./reviewer";
 import { runQa } from "./qa";
+import { runEditor } from "./editor";
 
 /**
- * このモジュールをimportする(副作用のみが目的)と、9エージェントすべてが
- * core/agent/registryに登録される。各runXXXはcreateLazyAgentで作られており、
- * ここでimportされてもLLM Providerの解決(環境変数読み込み)は発生しない。
+ * このモジュールをimportする(副作用のみが目的)と、全エージェントが
+ * core/agent/registryに登録される。LLMベースのrunXXXはcreateLazyAgentで
+ * 作られており、ここでimportされてもLLM Providerの解決(環境変数読み込み)は
+ * 発生しない。qaのみLLMを使わない決定論的な実装(Phase8参照)。
  */
 registerAgent("interviewer", runInterviewer);
 registerAgent("director", runDirector);
@@ -23,3 +25,4 @@ registerAgent("copywriter", runCopywriter);
 registerAgent("frontend", runFrontend);
 registerAgent("reviewer", runReviewer);
 registerAgent("qa", runQa);
+registerAgent("editor", runEditor);

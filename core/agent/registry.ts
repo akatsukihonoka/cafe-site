@@ -1,7 +1,7 @@
 import type { PipelineStage } from "../workflow/stages";
 import type { AgentRunner } from "../types/agent";
 
-export type RegisteredAgentName = "interviewer" | PipelineStage | "reviewer" | "qa";
+export type RegisteredAgentName = "interviewer" | PipelineStage | "reviewer" | "qa" | "editor";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyAgentRunner = AgentRunner<any, any>;
@@ -13,11 +13,11 @@ export function registerAgent(name: RegisteredAgentName, runner: AnyAgentRunner)
   registry.set(name, runner);
 }
 
-/** Workflow Engineから呼ばれる。未登録の場合はPhase6未実装であることを明示するエラーを投げる。 */
+/** Workflow Engineから呼ばれる。未登録の場合はまだ実装されていないことを明示するエラーを投げる。 */
 export function getAgent(name: RegisteredAgentName): AnyAgentRunner {
   const runner = registry.get(name);
   if (!runner) {
-    throw new Error(`Agent "${name}" is not registered yet. It will be implemented in Phase6.`);
+    throw new Error(`Agent "${name}" is not registered yet.`);
   }
   return runner;
 }
